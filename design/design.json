@@ -1,0 +1,43 @@
+{
+  "version": "1",
+  "meta": {
+    "name": "PromptPal Redesign",
+    "description": "PromptPal 提示词快捷工具全面重新设计，基于 TraeWork 设计系统",
+    "designLibrary": "TraeWork"
+  },
+  "data": {
+    "nodes": [
+      {
+        "id": "page-main",
+        "type": "page",
+        "name": "主界面 - 双栏布局",
+        "htmlSrc": "pages/main.html",
+        "width": 820,
+        "height": 500
+      },
+      {
+        "id": "page-editor",
+        "type": "page",
+        "name": "提示词编辑对话框",
+        "htmlSrc": "pages/editor.html",
+        "width": 560,
+        "height": 520
+      },
+      {
+        "id": "page-settings",
+        "type": "page",
+        "name": "设置页面",
+        "htmlSrc": "pages/settings.html",
+        "width": 960,
+        "height": 680
+      }
+    ]
+  },
+  "devMetadata": {
+    "designLibrary": {
+      "name": "TraeWork",
+      "id": "dl_builtin_trae_work",
+      "path": "c:/Users/Administrator/.trae-cn/design_libraries/TraeWork"
+    }
+  }
+}

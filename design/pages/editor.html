@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>编辑提示词 - PromptPal</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="../design_library/colors_and_type.css">
+  <link rel="stylesheet" href="../design_library/components.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      min-height: 520px;
+      background: rgba(0, 0, 0, 0.4);
+      color: var(--text-default);
+      font-family: var(--body-base-font-family);
+      font-size: var(--body-base-font-size);
+      line-height: var(--body-base-line-height);
+      letter-spacing: var(--body-base-letter-spacing);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--spacer-16);
+    }
+
+    button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+    input, select, textarea { font: inherit; color: inherit; }
+    svg { display: block; }
+
+    /* ===== Dialog ===== */
+    .dialog {
+      width: 560px;
+      max-width: 94vw;
+      max-height: 92vh;
+      background: var(--bg-base-default);
+      border-radius: var(--radius-12);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .dialog__header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: var(--spacer-14) var(--spacer-20);
+      border-bottom: 1px solid var(--border-neutral-l1);
+      flex-shrink: 0;
+    }
+    .dialog__title { font-family: var(--heading-md-font-family); font-size: var(--heading-md-font-size); font-weight: var(--heading-md-font-weight); line-height: var(--heading-md-line-height); }
+    .dialog__close { width: 28px; height: 28px; display: grid; place-items: center; border-radius: var(--radius-6); color: var(--icon-secondary); transition: background-color 120ms ease, color 120ms ease; }
+    .dialog__close svg { width: 15px; height: 15px; }
+    .dialog__close:hover { background: var(--bg-overlay-l1); color: var(--icon-default); }
+
+    .dialog__body { flex: 1; min-height: 0; overflow-y: auto; padding: var(--spacer-18) var(--spacer-20); }
+
+    .form-group + .form-group { margin-top: var(--spacer-14); }
+    .form-label { display: block; font-size: var(--body-sm-font-size); font-weight: var(--font-weight-medium); color: var(--text-secondary); margin-bottom: var(--spacer-6); }
+    .form-label--required::after { content: " *"; color: var(--status-error-default); }
+    .form-input, .form-select {
+      width: 100%; height: 32px; padding: 0 var(--spacer-10);
+      background: var(--bg-base-default); border: 1px solid var(--border-neutral-l2);
+      border-radius: var(--radius-6); font-size: var(--body-base-font-size); outline: none;
+      transition: border-color 120ms ease, box-shadow 120ms ease;
+    }
+    .form-input:focus, .form-select:focus { border-color: var(--border-brand); box-shadow: 0 0 0 3px var(--bg-brand-popup); }
+    .form-input::placeholder { color: var(--text-tertiary); }
+    .form-select {
+      appearance: none; -webkit-appearance: none; padding-right: 28px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16' fill='%23737373'%3E%3Cpath d='M8 10.5L3 5.5h10L8 10.5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 10px center;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--spacer-14); }
+
+    .form-textarea {
+      width: 100%; min-height: 200px; padding: var(--spacer-10);
+      background: var(--bg-base-default); border: 1px solid var(--border-neutral-l2);
+      border-radius: var(--radius-6); outline: none; resize: vertical;
+      font-family: var(--code-editor-font-family);
+      font-size: var(--code-editor-font-size);
+      line-height: var(--code-editor-line-height);
+      color: var(--text-default);
+      transition: border-color 120ms ease, box-shadow 120ms ease;
+    }
+    .form-textarea:focus { border-color: var(--border-brand); box-shadow: 0 0 0 3px var(--bg-brand-popup); }
+    .form-textarea::placeholder { color: var(--text-tertiary); }
+    .form-help { margin-top: var(--spacer-6); font-size: var(--body-xs-font-size); color: var(--text-tertiary); }
+
+    /* ===== Footer ===== */
+    .dialog__footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: var(--spacer-12) var(--spacer-20);
+      border-top: 1px solid var(--border-neutral-l1); flex-shrink: 0; background: var(--bg-base-secondary);
+    }
+    .dialog__footer-right { display: flex; gap: var(--spacer-8); }
+    .btn { height: 32px; padding: 0 var(--spacer-14); display: inline-flex; align-items: center; justify-content: center; gap: var(--spacer-6); border-radius: var(--radius-6); font-size: var(--body-base-font-size); font-weight: var(--font-weight-medium); transition: background-color 120ms ease, border-color 120ms ease; white-space: nowrap; }
+    .btn svg { width: 14px; height: 14px; }
+    .btn--secondary { background: var(--bg-base-default); border: 1px solid var(--border-neutral-l2); color: var(--text-default); }
+    .btn--secondary:hover { background: var(--bg-overlay-l1); }
+    .btn--danger { background: var(--bg-base-default); border: 1px solid var(--status-error-surface-l2); color: var(--status-error-default); }
+    .btn--danger:hover { background: var(--status-error-surface-l1); }
+    .btn--primary { background: var(--bg-brand); color: var(--text-onbrand); }
+    .btn--primary:hover { background: var(--bg-brand-hover); }
+    .btn--primary:active { background: var(--bg-brand-active); }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--bg-overlay-l2); border-radius: var(--radius-full); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--bg-overlay-l3); }
+  </style>
+</head>
+<body>
+  <div class="dialog">
+    <div class="dialog__header">
+      <div class="dialog__title">编辑提示词</div>
+      <button class="dialog__close" aria-label="关闭">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+      </button>
+    </div>
+
+    <div class="dialog__body">
+      <div class="form-group">
+        <label class="form-label form-label--required">标题</label>
+        <input type="text" class="form-input" value="代码 Review 助手" placeholder="例如：代码 Review 助手" />
+      </div>
+
+      <div class="form-group">
+        <div class="form-row">
+          <div>
+            <label class="form-label">分类</label>
+            <select class="form-select"><option>编程辅助</option><option>文档写作</option><option>系统提示词</option><option>翻译</option><option>影视</option></select>
+          </div>
+          <div>
+            <label class="form-label">标签</label>
+            <input type="text" class="form-input" value="代码, Review" placeholder="逗号分隔，如：代码, review" />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label form-label--required">提示词内容</label>
+        <textarea class="form-textarea" placeholder="输入提示词内容…">请 review 以下代码，重点关注安全性与可维护性方面。
+
+把待审代码粘贴到下方，或用「复制」后在对话里补充。
+
+请用结构化方式给出问题列表和改进建议，按「严重程度 · 位置 · 问题 · 建议」四段输出。</textarea>
+        <div class="form-help">提示词为纯文本，复制后可直接粘贴到任意对话。</div>
+      </div>
+    </div>
+
+    <div class="dialog__footer">
+      <button class="btn btn--danger">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M6 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v1h2.5a.5.5 0 0 1 0 1H11l-.6 8.1A1.5 1.5 0 0 1 8.9 13.5H7.1a1.5 1.5 0 0 1-1.5-1.4L5 4H3.5a.5.5 0 0 1 0-1H6V2z"/></svg>
+        删除
+      </button>
+      <div class="dialog__footer-right">
+        <button class="btn btn--secondary">取消</button>
+        <button class="btn btn--primary">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M4 2.5h6.5L13.5 5v8.5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1v-10a1 1 0 0 1 1-1Z"/><path d="M5 2.5V6h5.5V2.5M5 13.5V9.5h6v4"/></svg>
+          保存
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

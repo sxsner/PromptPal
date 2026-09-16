@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>设置 - PromptPal</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="../design_library/colors_and_type.css">
+  <link rel="stylesheet" href="../design_library/components.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      min-height: 680px;
+      background: var(--bg-base-default);
+      color: var(--text-default);
+      font-family: var(--body-base-font-family);
+      font-size: var(--body-base-font-size);
+      line-height: var(--body-base-line-height);
+      letter-spacing: var(--body-base-letter-spacing);
+    }
+
+    button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+    input, select { font: inherit; color: inherit; }
+
+    /* ===== Settings Layout ===== */
+    .settings {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr);
+      width: 100%;
+      height: 100%;
+      min-height: 680px;
+    }
+
+    /* ===== Sidebar ===== */
+    .settings__sidebar {
+      border-right: 1px solid var(--border-neutral-l1);
+      background: var(--bg-base-secondary);
+      padding: var(--spacer-16) var(--spacer-12);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacer-4);
+    }
+    .settings__brand {
+      font-family: var(--heading-sm-font-family);
+      font-size: var(--heading-sm-font-size);
+      font-weight: var(--heading-sm-font-weight);
+      line-height: var(--heading-sm-line-height);
+      padding: 0 var(--spacer-8) var(--spacer-12);
+      margin-bottom: var(--spacer-8);
+      border-bottom: 1px solid var(--border-neutral-l1);
+    }
+
+    .nav-section {
+      margin-top: var(--spacer-12);
+    }
+    .nav-section:first-child { margin-top: 0; }
+
+    .nav-section__title {
+      font-size: var(--body-xs-font-size);
+      font-weight: var(--body-xs-strong-font-weight);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-tertiary);
+      padding: var(--spacer-6) var(--spacer-8) var(--spacer-4);
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacer-10);
+      width: 100%;
+      height: 32px;
+      padding: 0 var(--spacer-10);
+      border-radius: var(--radius-6);
+      color: var(--text-secondary);
+      text-align: left;
+      transition: background-color 120ms ease, color 120ms ease;
+    }
+    .nav-item + .nav-item { margin-top: var(--spacer-2); }
+    .nav-item:hover {
+      background: var(--bg-overlay-l1);
+      color: var(--text-default);
+    }
+    .nav-item.is-active {
+      background: var(--bg-overlay-l2);
+      color: var(--text-default);
+      font-weight: var(--font-weight-medium);
+    }
+    .nav-item__icon {
+      width: 16px; height: 16px;
+      flex-shrink: 0;
+      display: grid; place-items: center;
+      color: var(--icon-tertiary);
+    }
+    .nav-item.is-active .nav-item__icon { color: var(--icon-brand); }
+
+    /* ===== Main Content ===== */
+    .settings__main {
+      padding: var(--spacer-32) var(--spacer-40);
+      overflow-y: auto;
+      min-width: 0;
+    }
+
+    .page-header {
+      margin-bottom: var(--spacer-32);
+    }
+    .page-header__title {
+      font-family: var(--heading-xl-font-family);
+      font-size: var(--heading-xl-font-size);
+      font-weight: var(--heading-xl-font-weight);
+      line-height: var(--heading-xl-line-height);
+      margin-bottom: var(--spacer-4);
+    }
+    .page-header__desc {
+      color: var(--text-secondary);
+      font-size: var(--body-base-font-size);
+    }
+
+    /* ===== Settings Section ===== */
+    .settings-section { margin-bottom: var(--spacer-32); }
+    .settings-section:last-child { margin-bottom: 0; }
+
+    .section-title {
+      font-size: var(--heading-sm-font-size);
+      font-weight: var(--heading-sm-font-weight);
+      line-height: var(--heading-sm-line-height);
+      margin-bottom: var(--spacer-16);
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--spacer-20) var(--spacer-24);
+      max-width: 720px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacer-6);
+      min-width: 0;
+    }
+    .field--full { grid-column: 1 / -1; }
+    .field__label {
+      font-size: var(--body-sm-font-size);
+      font-weight: var(--font-weight-medium);
+      color: var(--text-secondary);
+    }
+    .field__input {
+      width: 100%;
+      height: 32px;
+      padding: 0 var(--spacer-10);
+      background: var(--bg-base-default);
+      border: 1px solid var(--border-neutral-l1);
+      border-radius: var(--radius-6);
+      font-size: var(--body-md-font-size);
+      outline: none;
+      transition: border-color 120ms ease;
+    }
+    .field__input:focus { border-color: var(--border-neutral-l3); }
+
+    .field__select {
+      width: 100%;
+      height: 32px;
+      padding: 0 var(--spacer-10);
+      background: var(--bg-base-default);
+      border: 1px solid var(--border-neutral-l1);
+      border-radius: var(--radius-6);
+      font-size: var(--body-md-font-size);
+      outline: none;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 16 16' fill='%23737373'%3E%3Cpath d='M8 10.5L3 5.5h10L8 10.5z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 10px center;
+      padding-right: 28px;
+      transition: border-color 120ms ease;
+    }
+    .field__select:focus { border-color: var(--border-neutral-l3); }
+
+    .field__hint {
+      font-size: var(--body-sm-font-size);
+      color: var(--text-tertiary);
+      line-height: var(--body-sm-line-height);
+    }
+
+    /* Hotkey Input */
+    .hotkey-input {
+      display: flex;
+      align-items: center;
+      gap: var(--spacer-6);
+    }
+    .hotkey-key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 28px;
+      padding: 0 var(--spacer-6);
+      background: var(--bg-base-secondary);
+      border: 1px solid var(--border-neutral-l2);
+      border-radius: var(--radius-4);
+      font-family: var(--code-editor-font-family);
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+    .hotkey-plus {
+      color: var(--text-tertiary);
+      font-size: 12px;
+    }
+
+    /* Switch */
+    .ds-switch {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .ds-switch input {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .ds-switch__track {
+      width: 36px;
+      height: 20px;
+      background: var(--bg-overlay-l2);
+      border-radius: var(--radius-full);
+      position: relative;
+      transition: background-color 120ms ease;
+    }
+    .ds-switch input:checked + .ds-switch__track {
+      background: var(--bg-brand);
+    }
+    .ds-switch__thumb {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: var(--bg-white);
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      transition: transform 120ms ease;
+    }
+    .ds-switch input:checked + .ds-switch__track .ds-switch__thumb {
+      transform: translateX(16px);
+    }
+
+    .field__row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--spacer-16);
+    }
+
+    /* ===== Data Section ===== */
+    .data-card {
+      background: var(--bg-base-secondary);
+      border-radius: var(--radius-8);
+      padding: var(--spacer-16);
+      border: 1px solid var(--border-neutral-l1);
+      margin-bottom: var(--spacer-12);
+    }
+    .data-card__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--spacer-8);
+    }
+    .data-card__title {
+      font-weight: var(--font-weight-medium);
+      font-size: var(--body-base-font-size);
+    }
+    .data-card__desc {
+      font-size: var(--body-sm-font-size);
+      color: var(--text-tertiary);
+      line-height: var(--body-sm-line-height);
+    }
+    .data-card__actions {
+      display: flex;
+      gap: var(--spacer-8);
+      margin-top: var(--spacer-12);
+    }
+
+    .btn {
+      height: 30px;
+      padding: 0 var(--spacer-12);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacer-6);
+      border-radius: var(--radius-6);
+      font-size: var(--body-sm-font-size);
+      font-weight: var(--font-weight-medium);
+      transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+    }
+    .btn--secondary {
+      background: var(--bg-base-default);
+      border: 1px solid var(--border-neutral-l2);
+      color: var(--text-default);
+    }
+    .btn--secondary:hover {
+      background: var(--bg-overlay-l1);
+    }
+    .btn--danger {
+      background: var(--bg-base-default);
+      border: 1px solid var(--status-error-surface-l2);
+      color: var(--status-error-default);
+    }
+    .btn--danger:hover {
+      background: var(--status-error-surface-l1);
+    }
+    .btn--primary {
+      background: var(--bg-brand);
+      color: var(--text-onbrand);
+    }
+    .btn--primary:hover {
+      background: var(--bg-brand-hover);
+    }
+
+    /* ===== Divider ===== */
+    .section-divider {
+      height: 1px;
+      background: var(--border-neutral-l1);
+      margin: var(--spacer-24) 0;
+    }
+
+    /* ===== Alert ===== */
+    .ds-alert {
+      display: flex;
+      gap: var(--spacer-10);
+      padding: var(--spacer-12) var(--spacer-14);
+      background: var(--status-primary-surface-l1);
+      border: 1px solid var(--status-primary-surface-l2);
+      border-radius: var(--radius-8);
+      margin-bottom: var(--spacer-20);
+    }
+    .ds-alert__icon {
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+      margin-top: 2px;
+      color: var(--status-primary-default);
+    }
+    .ds-alert__title {
+      font-weight: var(--font-weight-medium);
+      font-size: var(--body-sm-font-size);
+      margin-bottom: 2px;
+    }
+    .ds-alert__desc {
+      font-size: var(--body-sm-font-size);
+      color: var(--text-secondary);
+      line-height: var(--body-sm-line-height);
+    }
+
+    /* ===== Scrollbar ===== */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: var(--bg-overlay-l2);
+      border-radius: var(--radius-full);
+    }
+    ::-webkit-scrollbar-thumb:hover { background: var(--bg-overlay-l3); }
+
+    @media (max-width: 768px) {
+      .settings { grid-template-columns: 1fr; }
+      .settings__sidebar { border-right: none; border-bottom: 1px solid var(--border-neutral-l1); }
+      .settings__main { padding: var(--spacer-16); }
+      .field-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="settings">
+    <!-- Sidebar -->
+    <aside class="settings__sidebar">
+      <div class="settings__brand">PromptPal</div>
+
+      <div class="nav-section">
+        <div class="nav-section__title">常规</div>
+        <button class="nav-item is-active">
+          <span class="nav-item__icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 1.375C8.58386 1.375 9.12929 1.66661 9.45312 2.15234L9.7041 2.5293C9.93056 2.86888 10.3434 3.03299 10.7412 2.94141L10.9893 2.88379C11.585 2.74631 12.2093 2.92608 12.6416 3.3584C13.0739 3.7907 13.2537 4.41501 13.1162 5.01074L13.0586 5.25879C12.967 5.65656 13.1311 6.06946 13.4707 6.2959L13.8477 6.54688C14.3334 6.87071 14.625 7.41615 14.625 8C14.625 8.58385 14.3334 9.12929 13.8477 9.45312L13.4707 9.7041C13.1311 9.93055 12.967 10.3434 13.0586 10.7412L13.1162 10.9893L13.1523 11.2139C13.2042 11.7384 13.0198 12.2634 12.6416 12.6416C12.2093 13.0739 11.585 13.2537 10.9893 13.1162L10.7412 13.0586C10.3434 12.967 9.93055 13.1311 9.7041 13.4707L9.45312 13.8477C9.12929 14.3334 8.58385 14.625 8 14.625C7.41615 14.625 6.87071 14.3334 6.54688 13.8477L6.2959 13.4707C6.06946 13.1311 5.65656 12.967 5.25879 13.0586L5.01074 13.1162C4.41501 13.2537 3.7907 13.0739 3.3584 12.6416C2.92608 12.2093 2.74631 11.585 2.88379 10.9893L2.94141 10.7412C3.03299 10.3434 2.86888 9.93056 2.5293 9.7041L2.15234 9.45312C1.6666 9.12929 1.375 8.58386 1.375 8C1.375 7.41614 1.6666 6.87071 2.15234 6.54688L2.5293 6.2959C2.86887 6.06945 3.03299 5.65655 2.94141 5.25879L2.88379 5.01074C2.74631 4.41501 2.92608 3.79072 3.3584 3.3584C3.79072 2.92608 4.41502 2.74631 5.01074 2.88379L5.25879 2.94141C5.65655 3.03299 6.06945 2.86887 6.2959 2.5293L6.54688 2.15234C6.87071 1.6666 7.41614 1.375 8 1.375Z"/>
+            </svg>
+          </span>
+          通用设置
+        </button>
+        <button class="nav-item">
+          <span class="nav-item__icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M5.333 2C5.746 2 6.083 2.337 6.083 2.75V3.25H9.917V2.75C9.917 2.337 10.254 2 10.667 2C11.079 2 11.417 2.337 11.417 2.75V3.25C12.512 3.25 13.417 4.155 13.417 5.25V11.5C13.417 12.595 12.512 13.5 11.417 13.5H4.583C3.488 13.5 2.583 12.595 2.583 11.5V5.25C2.583 4.155 3.488 3.25 4.583 3.25V2.75C4.583 2.337 4.92 2 5.333 2ZM4.583 4.75C4.308 4.75 4.083 4.975 4.083 5.25V5.75H11.917V5.25C11.917 4.975 11.692 4.75 11.417 4.75H4.583ZM11.917 7.25H4.083V11.5C4.083 11.775 4.308 12 4.583 12H11.417C11.692 12 11.917 11.775 11.917 11.5V7.25Z"/>
+            </svg>
+          </span>
+          热键设置
+        </button>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section__title">数据</div>
+        <button class="nav-item">
+          <span class="nav-item__icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 1.5C4.41015 1.5 1.5 4.41015 1.5 8C1.5 11.5899 4.41015 14.5 8 14.5C11.5899 14.5 14.5 11.5899 14.5 8C14.5 4.41015 11.5899 1.5 8 1.5ZM8 3C10.7614 3 13 5.23858 13 8C13 10.7614 10.7614 13 8 13C5.23858 13 3 10.7614 3 8C3 5.23858 5.23858 3 8 3ZM8 5C7.44772 5 7 5.44772 7 6V8C7 8.55228 7.44772 9 8 9C8.55228 9 9 8.55228 9 8V6C9 5.44772 8.55228 5 8 5ZM8 10.5C7.44772 10.5 7 10.9477 7 11.5C7 12.0523 7.44772 12.5 8 12.5C8.55228 12.5 9 12.0523 9 11.5C9 10.9477 8.55228 10.5 8 10.5Z"/>
+            </svg>
+          </span>
+          数据管理
+        </button>
+        <button class="nav-item">
+          <span class="nav-item__icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M2 2.75C2 2.33579 2.33579 2 2.75 2H13.25C13.6642 2 14 2.33579 14 2.75V13.25C14 13.6642 13.6642 14 13.25 14H2.75C2.33579 14 2 13.6642 2 13.25V2.75ZM3.5 3.5V12.5H12.5V3.5H3.5ZM5.25 5.5C5.25 5.08579 5.58579 4.75 6 4.75H10C10.4142 4.75 10.75 5.08579 10.75 5.5C10.75 5.91421 10.4142 6.25 10 6.25H6C5.58579 6.25 5.25 5.91421 5.25 5.5ZM5.25 8C5.25 7.58579 5.58579 7.25 6 7.25H10C10.4142 7.25 10.75 7.58579 10.75 8C10.75 8.41421 10.4142 8.75 10 8.75H6C5.58579 8.75 5.25 8.41421 5.25 8ZM5.25 10.5C5.25 10.0858 5.58579 9.75 6 9.75H8C8.41421 9.75 8.75 10.0858 8.75 10.5C8.75 10.9142 8.41421 11.25 8 11.25H6C5.58579 11.25 5.25 10.9142 5.25 10.5Z"/>
+            </svg>
+          </span>
+          分类管理
+        </button>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section__title">关于</div>
+        <button class="nav-item">
+          <span class="nav-item__icon">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M8 1.5C4.41015 1.5 1.5 4.41015 1.5 8C1.5 11.5899 4.41015 14.5 8 14.5C11.5899 14.5 14.5 11.5899 14.5 8C14.5 4.41015 11.5899 1.5 8 1.5ZM8 3C10.7614 3 13 5.23858 13 8C13 10.7614 10.7614 13 8 13C5.23858 13 3 10.7614 3 8C3 5.23858 5.23858 3 8 3ZM7.25 6.75C7.25 6.33579 7.58579 6 8 6C8.41421 6 8.75 6.33579 8.75 6.75C8.75 7.16421 8.41421 7.5 8 7.5C7.58579 7.5 7.25 7.16421 7.25 6.75ZM6.5 9C6.5 8.72386 6.72386 8.5 7 8.5H9C9.27614 8.5 9.5 8.72386 9.5 9C9.5 9.27614 9.27614 9.5 9 9.5H8.75V11.25H9C9.27614 11.25 9.5 11.4739 9.5 11.75C9.5 12.0261 9.27614 12.25 9 12.25H7C6.72386 12.25 6.5 12.0261 6.5 11.75C6.5 11.4739 6.72386 11.25 7 11.25H7.25V9.5H7C6.72386 9.5 6.5 9.27614 6.5 9Z"/>
+            </svg>
+          </span>
+          关于 PromptPal
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="settings__main">
+      <header class="page-header">
+        <h1 class="page-header__title">通用设置</h1>
+        <p class="page-header__desc">配置 PromptPal 的默认行为和外观。</p>
+      </header>
+
+      <!-- Info Alert -->
+      <div class="ds-alert ds-alert--info">
+        <span class="ds-alert__icon">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8 1C4.13401 1 1 4.13401 1 8C1 11.866 4.13401 15 8 15C11.866 15 15 11.866 15 8C15 4.13401 11.866 1 8 1ZM7.5 4.75C7.5 4.33579 7.83579 4 8.25 4C8.66421 4 9 4.33579 9 4.75C9 5.16421 8.66421 5.5 8.25 5.5C7.83579 5.5 7.5 5.16421 7.5 4.75ZM6.75 7C6.75 6.58579 7.08579 6.25 7.5 6.25H8.5C8.91421 6.25 9.25 6.58579 9.25 7V11C9.25 11.4142 8.91421 11.75 8.5 11.75H7.5C7.08579 11.75 6.75 11.4142 6.75 11V7Z"/>
+          </svg>
+        </span>
+        <div>
+          <div class="ds-alert__title">设置会自动保存</div>
+          <div class="ds-alert__desc">所有更改会立即生效并保存到本地数据库。</div>
+        </div>
+      </div>
+
+      <!-- Appearance Section -->
+      <section class="settings-section">
+        <h2 class="section-title">外观</h2>
+        <div class="field-grid">
+          <div class="field">
+            <label class="field__label">主题</label>
+            <select class="field__select">
+              <option>跟随系统</option>
+              <option selected>浅色模式</option>
+              <option>深色模式</option>
+            </select>
+            <span class="field__hint">当前仅支持浅色模式</span>
+          </div>
+          <div class="field">
+            <label class="field__label">字体大小</label>
+            <select class="field__select">
+              <option>小</option>
+              <option selected>默认</option>
+              <option>大</option>
+            </select>
+            <span class="field__hint">调整界面文字大小</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Behavior Section -->
+      <section class="settings-section">
+        <h2 class="section-title">行为</h2>
+        <div class="field-grid">
+          <div class="field field--full">
+            <div class="field__row">
+              <div>
+                <div class="field__label">启动时最小化到托盘</div>
+                <div class="field__hint">启动应用后自动隐藏到系统托盘</div>
+              </div>
+              <label class="ds-switch">
+                <input type="checkbox" />
+                <span class="ds-switch__track">
+                  <span class="ds-switch__thumb"></span>
+                </span>
+              </label>
+            </div>
+          </div>
+          <div class="field field--full">
+            <div class="field__row">
+              <div>
+                <div class="field__label">复制后自动关闭窗口</div>
+                <div class="field__hint">点击复制按钮后自动最小化到托盘</div>
+              </div>
+              <label class="ds-switch">
+                <input type="checkbox" checked />
+                <span class="ds-switch__track">
+                  <span class="ds-switch__thumb"></span>
+                </span>
+              </label>
+            </div>
+          </div>
+          <div class="field field--full">
+            <div class="field__row">
+              <div>
+                <div class="field__label">显示使用次数</div>
+                <div class="field__hint">在提示词列表中显示使用次数统计</div>
+              </div>
+              <label class="ds-switch">
+                <input type="checkbox" checked />
+                <span class="ds-switch__track">
+                  <span class="ds-switch__thumb"></span>
+                </span>
+              </label>
+            </div>
+          </div>
+          <div class="field field--full">
+            <div class="field__row">
+              <div>
+                <div class="field__label">全局热键唤起</div>
+                <div class="field__hint">使用热键从任意位置快速唤起窗口</div>
+              </div>
+              <label class="ds-switch">
+                <input type="checkbox" checked />
+                <span class="ds-switch__track">
+                  <span class="ds-switch__thumb"></span>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Hotkey Section -->
+      <section class="settings-section">
+        <h2 class="section-title">全局热键</h2>
+        <div class="field-grid">
+          <div class="field">
+            <label class="field__label">唤起主窗口</label>
+            <div class="hotkey-input">
+              <span class="hotkey-key">Ctrl</span>
+              <span class="hotkey-plus">+</span>
+              <span class="hotkey-key">Shift</span>
+              <span class="hotkey-plus">+</span>
+              <span class="hotkey-key">P</span>
+            </div>
+            <span class="field__hint">点击修改自定义热键</span>
+          </div>
+          <div class="field">
+            <label class="field__label">快速复制最近使用</label>
+            <div class="hotkey-input">
+              <span class="hotkey-key">Ctrl</span>
+              <span class="hotkey-plus">+</span>
+              <span class="hotkey-key">Alt</span>
+              <span class="hotkey-plus">+</span>
+              <span class="hotkey-key">V</span>
+            </div>
+            <span class="field__hint">直接复制最近使用的提示词</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- Data Section -->
+      <section class="settings-section">
+        <h2 class="section-title">数据管理</h2>
+
+        <div class="data-card">
+          <div class="data-card__header">
+            <div class="data-card__title">导出数据</div>
+          </div>
+          <div class="data-card__desc">将所有提示词、分类和标签导出为 JSON 文件，用于备份或迁移。</div>
+          <div class="data-card__actions">
+            <button class="btn btn--secondary">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 1C8.41421 1 8.75 1.33579 8.75 1.75V8.58579L11.2929 6.04289C11.6834 5.65237 12.3166 5.65237 12.7071 6.04289C13.0976 6.43342 13.0976 7.06658 12.7071 7.45711L8.70711 11.4571C8.31658 11.8476 7.68342 11.8476 7.29289 11.4571L3.29289 7.45711C2.90237 7.06658 2.90237 6.43342 3.29289 6.04289C3.68342 5.65237 4.31658 5.65237 4.70711 6.04289L7.25 8.58579V1.75C7.25 1.33579 7.58579 1 8 1ZM3 12.75C3 12.3358 3.33579 12 3.75 12H12.25C12.6642 12 13 12.3358 13 12.75C13 13.1642 12.6642 13.5 12.25 13.5H3.75C3.33579 13.5 3 13.1642 3 12.75Z"/>
+              </svg>
+              导出 JSON
+            </button>
+          </div>
+        </div>
+
+        <div class="data-card">
+          <div class="data-card__header">
+            <div class="data-card__title">导入数据</div>
+          </div>
+          <div class="data-card__desc">从 JSON 文件导入提示词数据，支持合并或覆盖现有数据。</div>
+          <div class="data-card__actions">
+            <button class="btn btn--secondary">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M8 15C7.58579 15 7.25 14.6642 7.25 14.25V7.41421L4.70711 9.95711C4.31658 10.3476 3.68342 10.3476 3.29289 9.95711C2.90237 9.56658 2.90237 8.93342 3.29289 8.54289L7.29289 4.54289C7.68342 4.15237 8.31658 4.15237 8.70711 4.54289L12.7071 8.54289C13.0976 8.93342 13.0976 9.56658 12.7071 9.95711C12.3166 10.3476 11.6834 10.3476 11.2929 9.95711L8.75 7.41421V14.25C8.75 14.6642 8.41421 15 8 15ZM3.75 4C3.33579 4 3 3.66421 3 3.25C3 2.83579 3.33579 2.5 3.75 2.5H12.25C12.6642 2.5 13 2.83579 13 3.25C13 3.66421 12.6642 4 12.25 4H3.75Z"/>
+              </svg>
+              导入 JSON
+            </button>
+          </div>
+        </div>
+
+        <div class="data-card" style="border-color: var(--status-error-surface-l2);">
+          <div class="data-card__header">
+            <div class="data-card__title" style="color: var(--status-error-default);">重置数据</div>
+          </div>
+          <div class="data-card__desc">清除所有提示词和分类，恢复到初始状态。此操作不可撤销。</div>
+          <div class="data-card__actions">
+            <button class="btn btn--danger">
+              <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 2C6 1.44772 6.44772 1 7 1H9C9.55228 1 10 1.44772 10 2V3H12.5C12.7761 3 13 3.22386 13 3.5C13 3.77614 12.7761 4 12.5 4H11.9098L11.3148 13.1226C11.2309 14.426 10.1583 15.4257 8.85317 15.4257H7.14683C5.84171 15.4257 4.76908 14.426 4.68523 13.1226L4.09017 4H3.5C3.22386 4 3 3.77614 3 3.5C3 3.22386 3.22386 3 3.5 3H6V2Z"/>
+              </svg>
+              重置所有数据
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <div class="section-divider"></div>
+
+      <!-- About Section -->
+      <section class="settings-section">
+        <h2 class="section-title">关于</h2>
+        <div class="field-grid">
+          <div class="field">
+            <label class="field__label">版本</label>
+            <div style="font-family: var(--code-editor-font-family); font-size: 13px; color: var(--text-secondary);">
+              v1.0.0
+            </div>
+          </div>
+          <div class="field">
+            <label class="field__label">数据库位置</label>
+            <div style="font-family: var(--code-editor-font-family); font-size: 12px; color: var(--text-secondary); word-break: break-all;">
+              %LOCALAPPDATA%\PromptPal\promptpal.db
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
+

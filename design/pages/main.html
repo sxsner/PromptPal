@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PromptPal - 主界面</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="../design_library/colors_and_type.css">
+  <link rel="stylesheet" href="../design_library/components.css">
+  <style>
+    /* ===== Reset ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--bg-base-tertiary);
+      color: var(--text-default);
+      font-family: var(--font-family-default);
+      font-size: var(--body-base-font-size);
+      line-height: var(--body-base-line-height);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--spacer-16);
+    }
+
+    button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+    input, select, textarea { font-family: inherit; color: inherit; }
+    svg { display: block; }
+
+    /* ===== App Window ===== */
+    .app-window {
+      position: relative;
+      width: 820px;
+      height: 500px;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-base-secondary);
+      border: 1px solid var(--border-neutral-l2);
+      border-radius: var(--radius-10);
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.16);
+      flex-shrink: 0;
+    }
+
+    /* ===== Title Bar (compact) ===== */
+    .titlebar {
+      display: flex;
+      align-items: center;
+      height: 30px;
+      flex-shrink: 0;
+      padding: 0 var(--spacer-8);
+      background: var(--bg-base-secondary);
+      border-bottom: 1px solid var(--border-neutral-l1);
+      user-select: none;
+    }
+    .titlebar__left { display: flex; align-items: center; gap: var(--spacer-6); }
+    .titlebar__app-icon {
+      width: 16px; height: 16px;
+      display: grid; place-items: center;
+      background: var(--bg-brand);
+      border-radius: var(--radius-4);
+      color: var(--text-onbrand);
+      font-size: 10px;
+      font-weight: var(--font-weight-strong);
+    }
+    .titlebar__title {
+      font-size: var(--body-sm-font-size);
+      font-weight: var(--font-weight-medium);
+      color: var(--text-secondary);
+    }
+    .titlebar__spacer { flex: 1; }
+    .titlebar__controls { display: flex; gap: 1px; }
+    .titlebar__btn {
+      width: 26px; height: 20px;
+      display: grid; place-items: center;
+      border-radius: var(--radius-4);
+      color: var(--icon-secondary);
+      transition: background-color 120ms ease, color 120ms ease;
+    }
+    .titlebar__btn svg { width: 11px; height: 11px; }
+    .titlebar__btn:hover { background: var(--bg-overlay-l1); color: var(--icon-default); }
+    .titlebar__btn--pin.is-on { color: var(--bg-brand); }
+    .titlebar__btn--close:hover { background: var(--status-error-default); color: var(--text-white); }
+
+    /* ===== Main Layout: 2 columns ===== */
+    .main-body { flex: 1; display: flex; min-height: 0; overflow: hidden; }
+
+    /* ===== Left rail (categories + list, compact) ===== */
+    .rail {
+      width: 208px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-base-secondary);
+      border-right: 1px solid var(--border-neutral-l1);
+      min-height: 0;
+    }
+
+    /* filter chips (top) */
+    .chip-row { display: flex; gap: var(--spacer-4); padding: var(--spacer-8) var(--spacer-8) var(--spacer-6); flex-shrink: 0; }
+    .chip {
+      flex: 1;
+      display: inline-flex; align-items: center; justify-content: center; gap: 3px;
+      height: 24px; padding: 0 var(--spacer-4);
+      background: var(--bg-base-default);
+      border: 1px solid var(--border-neutral-l1);
+      border-radius: var(--radius-6);
+      color: var(--text-secondary);
+      font-size: var(--body-sm-font-size);
+      transition: all 120ms ease; white-space: nowrap;
+    }
+    .chip svg { width: 11px; height: 11px; }
+    .chip:hover { border-color: var(--border-neutral-l2); color: var(--text-default); }
+    .chip.is-active { background: var(--bg-brand); border-color: var(--bg-brand); color: var(--text-onbrand); }
+
+    /* section title */
+    .rail__section {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: var(--spacer-2) var(--spacer-10) var(--spacer-2);
+      font-size: 10px; font-weight: var(--font-weight-strong);
+      text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-tertiary);
+      flex-shrink: 0;
+    }
+    .icon-btn-xs {
+      width: 16px; height: 16px; display: grid; place-items: center;
+      border-radius: var(--radius-4); color: var(--icon-tertiary);
+      transition: background-color 120ms ease, color 120ms ease;
+    }
+    .icon-btn-xs svg { width: 10px; height: 10px; }
+    .icon-btn-xs:hover { background: var(--bg-overlay-l1); color: var(--icon-default); }
+
+    /* categories (compact, capped, scroll) */
+    .category-list {
+      max-height: 128px; overflow-y: auto;
+      padding: 0 var(--spacer-6);
+      flex-shrink: 0;
+    }
+    .category-item {
+      display: flex; align-items: center; gap: var(--spacer-8);
+      width: 100%; height: 24px; padding: 0 var(--spacer-8);
+      border-radius: var(--radius-6); color: var(--text-secondary); text-align: left;
+      transition: background-color 120ms ease;
+    }
+    .category-item + .category-item { margin-top: 1px; }
+    .category-item:hover { background: var(--bg-overlay-l1); color: var(--text-default); }
+    .category-item.is-active { background: var(--bg-overlay-l2); color: var(--text-default); font-weight: var(--font-weight-medium); }
+    .category-item__name { font-size: var(--body-md-font-size); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+    .category-item__count { flex-shrink: 0; font-size: 10px; color: var(--text-tertiary); font-family: var(--font-family-mono); }
+
+    .rail__divider { height: 1px; background: var(--border-neutral-l1); margin: var(--spacer-6) 0 var(--spacer-2); flex-shrink: 0; }
+
+    /* list header: sort + new prompt */
+    .list-head {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: var(--spacer-6);
+      padding: var(--spacer-4) var(--spacer-8) var(--spacer-4);
+      flex-shrink: 0;
+    }
+    .sort-options { display: flex; gap: 2px; }
+    .sort-option {
+      height: 18px; padding: 0 var(--spacer-6); font-size: 10px; color: var(--text-tertiary);
+      border-radius: var(--radius-4); white-space: nowrap; transition: background-color 120ms ease, color 120ms ease;
+    }
+    .sort-option:hover { background: var(--bg-overlay-l1); color: var(--text-secondary); }
+    .sort-option.is-active { background: var(--bg-overlay-l2); color: var(--text-default); font-weight: var(--font-weight-medium); }
+    .rail__new-btn {
+      width: 20px; height: 20px; display: grid; place-items: center;
+      border-radius: var(--radius-6); background: var(--bg-brand); color: var(--text-onbrand);
+      transition: background-color 120ms ease;
+    }
+    .rail__new-btn svg { width: 11px; height: 11px; }
+    .rail__new-btn:hover { background: var(--bg-brand-hover); }
+
+    /* prompt list (flex, scroll) */
+    .prompt-list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 var(--spacer-6) var(--spacer-8); }
+    .prompt-item {
+      display: flex; align-items: center; gap: var(--spacer-6);
+      padding: var(--spacer-6) var(--spacer-8);
+      border-radius: var(--radius-6); cursor: pointer;
+      border: 1px solid transparent;
+      transition: background-color 120ms ease;
+    }
+    .prompt-item + .prompt-item { margin-top: 1px; }
+    .prompt-item:hover { background: var(--bg-overlay-l1); }
+    .prompt-item.is-active { background: var(--bg-base-default); border-color: var(--border-neutral-l2); }
+    .prompt-item__body { flex: 1; min-width: 0; }
+    .prompt-item__row { display: flex; align-items: center; gap: var(--spacer-4); }
+    .prompt-item__title {
+      font-weight: var(--font-weight-medium); font-size: var(--body-md-font-size);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0;
+    }
+    .prompt-item__fav { flex-shrink: 0; color: var(--accent-amber); display: inline-flex; }
+    .prompt-item__fav svg { width: 10px; height: 10px; }
+    .prompt-item__meta { flex-shrink: 0; font-size: 10px; color: var(--text-tertiary); font-family: var(--font-family-mono); display: inline-flex; align-items: center; gap: 2px; }
+    .prompt-item__meta svg { width: 9px; height: 9px; }
+    .prompt-item__preview {
+      font-size: var(--body-xs-font-size); color: var(--text-tertiary); line-height: 13px; margin-top: 1px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* ===== Right detail (max prompt display) ===== */
+    .detail {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-base-default);
+      min-height: 0;
+    }
+    .detail__head {
+      padding: var(--spacer-8) var(--spacer-12);
+      display: flex; align-items: center; gap: var(--spacer-10);
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border-neutral-l1);
+    }
+    .detail__title-wrap { flex: 1; min-width: 0; }
+    .detail__title { font-size: var(--heading-sm-font-size); font-weight: var(--heading-sm-font-weight); line-height: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .detail__meta { display: flex; align-items: center; gap: var(--spacer-6); font-size: var(--body-xs-font-size); color: var(--text-tertiary); margin-top: 1px; }
+    .detail__meta .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--border-neutral-l3); }
+    .detail__actions { display: flex; gap: 2px; flex-shrink: 0; }
+    .icon-btn {
+      width: 26px; height: 26px; display: grid; place-items: center;
+      border-radius: var(--radius-6); color: var(--icon-secondary);
+      transition: background-color 120ms ease, color 120ms ease;
+    }
+    .icon-btn svg { width: 14px; height: 14px; }
+    .icon-btn:hover { background: var(--bg-overlay-l1); color: var(--icon-default); }
+    .icon-btn.is-active { color: var(--accent-amber); }
+
+    /* the star: prompt display area */
+    .prompt-display {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: var(--spacer-14) var(--spacer-16);
+    }
+    .prompt-display__text {
+      font-family: var(--code-editor-font-family);
+      font-size: 15px;
+      line-height: 26px;
+      color: var(--text-default);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .detail__foot {
+      padding: var(--spacer-8) var(--spacer-12);
+      flex-shrink: 0;
+      border-top: 1px solid var(--border-neutral-l1);
+      background: var(--bg-base-secondary);
+      display: flex; align-items: center; gap: var(--spacer-8);
+    }
+    .copy-btn {
+      flex: 1; height: 32px;
+      display: inline-flex; align-items: center; justify-content: center; gap: var(--spacer-6);
+      background: var(--bg-brand); color: var(--text-onbrand);
+      border-radius: var(--radius-8);
+      font-weight: var(--font-weight-medium); font-size: var(--body-base-font-size);
+      transition: background-color 120ms ease;
+    }
+    .copy-btn svg { width: 14px; height: 14px; }
+    .copy-btn:hover { background: var(--bg-brand-hover); }
+    .copy-btn:active { background: var(--bg-brand-active); }
+
+    /* ===== Status Bar (compact) ===== */
+    .status-bar {
+      height: 20px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 var(--spacer-10);
+      background: var(--bg-base-secondary);
+      border-top: 1px solid var(--border-neutral-l1);
+      font-size: 10px; color: var(--text-tertiary);
+    }
+    .status-bar__left, .status-bar__right { display: flex; align-items: center; gap: var(--spacer-6); }
+    .status-bar__dot { width: 5px; height: 5px; border-radius: 50%; background: var(--status-success-default); }
+    .status-bar__hotkey { font-family: var(--font-family-mono); background: var(--bg-overlay-l1); padding: 1px 5px; border-radius: var(--radius-4); font-size: 9px; color: var(--text-secondary); }
+
+    /* ===== Toast ===== */
+    .toast {
+      position: absolute; bottom: 34px; left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: var(--bg-invert); color: var(--text-white);
+      padding: var(--spacer-6) var(--spacer-12);
+      border-radius: var(--radius-full);
+      font-size: var(--body-sm-font-size);
+      opacity: 0; transition: all 200ms ease; pointer-events: none; z-index: 100;
+      display: flex; align-items: center; gap: var(--spacer-6);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.24);
+    }
+    .toast svg { width: 13px; height: 13px; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ===== Scrollbar ===== */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--bg-overlay-l2); border-radius: var(--radius-full); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--bg-overlay-l3); }
+  </style>
+</head>
+<body>
+  <div class="app-window">
+    <!-- Title Bar -->
+    <div class="titlebar">
+      <div class="titlebar__left">
+        <div class="titlebar__app-icon">P</div>
+        <div class="titlebar__title">PromptPal</div>
+      </div>
+      <div class="titlebar__spacer"></div>
+      <div class="titlebar__controls">
+        <button class="titlebar__btn titlebar__btn--pin is-on" aria-label="窗口置顶" title="窗口置顶">
+          <svg viewBox="0 0 16 16" fill="currentColor"><path d="M9.9 1.6a.6.6 0 0 0-1.03-.43L6.1 3.94a1.4 1.4 0 0 1-.66.36l-2.02.5a.5.5 0 0 0-.22.85l2.1 2.1-2.13 2.13a.5.5 0 1 0 .71.71L5.9 11.46l2.1 2.1a.5.5 0 0 0 .85-.22l.5-2.02a1.4 1.4 0 0 1 .36-.66l2.77-2.77a.6.6 0 0 0-.43-1.03H9.9z"/></svg>
+        </button>
+        <button class="titlebar__btn" aria-label="最小化" title="最小化">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3.5 12.5h9"/></svg>
+        </button>
+        <button class="titlebar__btn" aria-label="最大化" title="最大化">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="3.5" y="3.5" width="9" height="9" rx="1"/></svg>
+        </button>
+        <button class="titlebar__btn titlebar__btn--close" aria-label="关闭" title="关闭">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><path d="M4 4l8 8M12 4l-8 8"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Body -->
+    <div class="main-body">
+      <!-- Left rail -->
+      <aside class="rail">
+        <div class="chip-row">
+          <button class="chip is-active">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2.5 3.5h11v1.6h-11zM2.5 7.2h11v1.6h-11zM2.5 10.9h7v1.6h-7z"/></svg>
+            全部
+          </button>
+          <button class="chip" title="收藏">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 2.2l1.7 3.5 3.8.55-2.75 2.68.65 3.8L8 11.9l-3.4 1.8.65-3.8L2.5 6.25l3.8-.55z"/></svg>
+            收藏
+          </button>
+          <button class="chip" title="最近">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3.2l2 1.3" stroke-linecap="round"/></svg>
+            最近
+          </button>
+        </div>
+
+        <div class="rail__section">
+          分类
+          <button class="icon-btn-xs" aria-label="添加分类" title="添加分类">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 3.5c.414 0 .75.336.75.75v3h3a.75.75 0 1 1 0 1.5h-3v3a.75.75 0 1 1-1.5 0v-3h-3a.75.75 0 0 1 0-1.5h3v-3c0-.414.336-.75.75-.75Z"/></svg>
+          </button>
+        </div>
+        <div class="category-list">
+          <button class="category-item is-active">
+            <span class="category-item__name">编程辅助</span>
+            <span class="category-item__count">9</span>
+          </button>
+          <button class="category-item">
+            <span class="category-item__name">文档写作</span>
+            <span class="category-item__count">5</span>
+          </button>
+          <button class="category-item">
+            <span class="category-item__name">系统提示词</span>
+            <span class="category-item__count">4</span>
+          </button>
+          <button class="category-item">
+            <span class="category-item__name">翻译</span>
+            <span class="category-item__count">3</span>
+          </button>
+          <button class="category-item">
+            <span class="category-item__name">影视</span>
+            <span class="category-item__count">3</span>
+          </button>
+        </div>
+
+        <div class="rail__divider"></div>
+
+        <div class="list-head">
+          <div class="sort-options">
+            <button class="sort-option is-active">频率</button>
+            <button class="sort-option">更新</button>
+            <button class="sort-option">名称</button>
+          </div>
+          <button class="rail__new-btn" aria-label="新建提示词" title="新建提示词">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 3.5c.414 0 .75.336.75.75v3h3a.75.75 0 1 1 0 1.5h-3v3a.75.75 0 1 1-1.5 0v-3h-3a.75.75 0 0 1 0-1.5h3v-3c0-.414.336-.75.75-.75Z"/></svg>
+          </button>
+        </div>
+
+        <div class="prompt-list">
+          <div class="prompt-item is-active">
+            <div class="prompt-item__body">
+              <div class="prompt-item__row">
+                <span class="prompt-item__title">代码 Review 助手</span>
+                <span class="prompt-item__fav"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 2.2l1.7 3.5 3.8.55-2.75 2.68.65 3.8L8 11.9l-3.4 1.8.65-3.8L2.5 6.25l3.8-.55z"/></svg></span>
+                <span class="prompt-item__meta"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M9 1L3 9h4l-1 6 6-8H8z"/></svg>128</span>
+              </div>
+              <div class="prompt-item__preview">请 review 以下代码，重点关注安全性与可维护性…</div>
+            </div>
+          </div>
+
+          <div class="prompt-item">
+            <div class="prompt-item__body">
+              <div class="prompt-item__row">
+                <span class="prompt-item__title">System Prompt — 代码专家</span>
+                <span class="prompt-item__fav"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 2.2l1.7 3.5 3.8.55-2.75 2.68.65 3.8L8 11.9l-3.4 1.8.65-3.8L2.5 6.25l3.8-.55z"/></svg></span>
+                <span class="prompt-item__meta"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M9 1L3 9h4l-1 6 6-8H8z"/></svg>312</span>
+              </div>
+              <div class="prompt-item__preview">你是一位资深开发专家，擅长系统架构与性能优化…</div>
+            </div>
+          </div>
+
+          <div class="prompt-item">
+            <div class="prompt-item__body">
+              <div class="prompt-item__row">
+                <span class="prompt-item__title">Bug 诊断</span>
+                <span class="prompt-item__meta"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M9 1L3 9h4l-1 6 6-8H8z"/></svg>45</span>
+              </div>
+              <div class="prompt-item__preview">我的项目遇到了一个错误，请帮我分析根因并给出修复方案…</div>
+            </div>
+          </div>
+
+          <div class="prompt-item">
+            <div class="prompt-item__body">
+              <div class="prompt-item__row">
+                <span class="prompt-item__title">文档写作通用模板</span>
+                <span class="prompt-item__fav"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 2.2l1.7 3.5 3.8.55-2.75 2.68.65 3.8L8 11.9l-3.4 1.8.65-3.8L2.5 6.25l3.8-.55z"/></svg></span>
+                <span class="prompt-item__meta"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M9 1L3 9h4l-1 6 6-8H8z"/></svg>56</span>
+              </div>
+              <div class="prompt-item__preview">请帮我写一份技术方案文档，结构清晰、面向工程师…</div>
+            </div>
+          </div>
+
+          <div class="prompt-item">
+            <div class="prompt-item__body">
+              <div class="prompt-item__row">
+                <span class="prompt-item__title">单元测试生成</span>
+                <span class="prompt-item__meta"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M9 1L3 9h4l-1 6 6-8H8z"/></svg>21</span>
+              </div>
+              <div class="prompt-item__preview">为给定函数生成覆盖边界条件的单元测试用例…</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right detail -->
+      <section class="detail">
+        <div class="detail__head">
+          <div class="detail__title-wrap">
+            <div class="detail__title">代码 Review 助手</div>
+            <div class="detail__meta">
+              <span>128 次</span><span class="dot"></span><span>3 分钟前</span><span class="dot"></span><span>编程辅助</span>
+            </div>
+          </div>
+          <div class="detail__actions">
+            <button class="icon-btn is-active" aria-label="收藏" title="收藏">
+              <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 2.2l1.7 3.5 3.8.55-2.75 2.68.65 3.8L8 11.9l-3.4 1.8.65-3.8L2.5 6.25l3.8-.55z"/></svg>
+            </button>
+            <button class="icon-btn" aria-label="编辑" title="编辑">
+              <svg viewBox="0 0 16 16" fill="currentColor"><path d="M12.29 2.29a1 1 0 0 1 1.42 0l.7.7a1 1 0 0 1 0 1.42l-1.2 1.2-2.13-2.13zM9.5 3.58L13.42 7.5 6.92 14H3v-3.92z"/></svg>
+            </button>
+            <button class="icon-btn" aria-label="移动分类" title="移动分类">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"><path d="M2.5 5.5A1.5 1.5 0 0 1 4 4h2.2l1 1.4H12a1.5 1.5 0 0 1 1.5 1.5v5A1.5 1.5 0 0 1 12 13.4H4a1.5 1.5 0 0 1-1.5-1.5z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="prompt-display">
+          <div class="prompt-display__text">请 review 以下代码，重点关注安全性与可维护性方面。
+
+把待审代码粘贴到下方，或用「复制」后在对话里补充。
+
+请用结构化方式给出问题列表和改进建议，按「严重程度 · 位置 · 问题 · 建议」四段输出。</div>
+        </div>
+
+        <div class="detail__foot">
+          <button class="copy-btn">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><rect x="5.5" y="5.5" width="8" height="8" rx="1.5"/><path d="M10.5 3.5H4a1.5 1.5 0 0 0-1.5 1.5V11"/></svg>
+            复制提示词
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="status-bar__left">
+        <span class="status-bar__dot"></span>
+        <span>编程辅助 · 9 条</span>
+      </div>
+      <div class="status-bar__right">
+        <span>热键</span>
+        <span class="status-bar__hotkey">Ctrl+Shift+P</span>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1Zm3.2 5.2l-4 4a.75.75 0 0 1-1.06 0l-1.8-1.8a.75.75 0 1 1 1.06-1.06l1.27 1.27 3.47-3.47a.75.75 0 1 1 1.06 1.06Z"/></svg>
+      已复制到剪贴板
+    </div>
+  </div>
+</body>
+</html>
