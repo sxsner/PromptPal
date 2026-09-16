@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PromptPal.App/PromptPal.App.csproj" />
+    <Project Path="src/PromptPal.Core/PromptPal.Core.csproj" />
+    <Project Path="src/PromptPal.Mcp/PromptPal.Mcp.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/PromptPal.Core.Tests/PromptPal.Core.Tests.csproj" />
+  </Folder>
+</Solution>
