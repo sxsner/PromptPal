@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "PromptPal.App (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "PromptPal.App (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

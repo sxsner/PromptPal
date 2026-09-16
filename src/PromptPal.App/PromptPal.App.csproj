@@ -1,0 +1,117 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>PromptPal_App</RootNamespace>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- 嵌入 exe 图标：资源管理器/任务栏/Alt+Tab/Win11 托盘图标设置按此图标关联本程序 -->
+    <ApplicationIcon>Assets\AppIcon.ico</ApplicationIcon>
+    <!-- Win32 版本资源：任务管理器/系统设置/自启项显示友好名称而非 PromptPal.App -->
+    <AssemblyTitle>PromptPal</AssemblyTitle>
+    <Product>PromptPal 提示词快捷工具</Product>
+    <FileDescription>PromptPal 提示词快捷工具</FileDescription>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
+    <AssemblyName>PromptPal.App</AssemblyName>
+    <!-- 仅支持 x64：MainWindow 的 SetWindowLongPtr P/Invoke 不含 x86 分支，发布物也只出 win-x64 -->
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-$([System.Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString().ToLowerInvariant())</RuntimeIdentifier>
+    <PublishProfile Condition="Exists('Properties\PublishProfiles\win-$(Platform).pubxml')">win-$(Platform).pubxml</PublishProfile>
+    <UseWinUI>true</UseWinUI>
+    <WinUISDKReferences>false</WinUISDKReferences>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <RetainVM>false</RetainVM>
+    <!-- .NET 10 + WindowsAppSDK 2.4：AOT 优化器生成的引导代码与随包 WinRT.Runtime 不兼容，须关闭 -->
+    <CsWinRTAotOptimizerEnabled>false</CsWinRTAotOptimizerEnabled>
+    <!-- 使用 Program.cs 中的自定义 Main（单实例仲裁必须早于 XAML 初始化） -->
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\SplashScreen.scale-200.png" />
+    <Content Include="Assets\LockScreenLogo.scale-200.png" />
+    <Content Include="Assets\Square150x150Logo.scale-200.png" />
+    <Content Include="Assets\Square44x44Logo.scale-200.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
+    <Content Include="Assets\Square44x44Logo.targetsize-48_altform-lightunplated.png" />
+    <Content Include="Assets\StoreLogo.png" />
+    <!-- CopyToOutputDirectory：非打包运行/发布时 ico 必须出现在 exe 同级 Assets\，
+         供 AppWindow.SetIcon 与托盘 LoadImage 读取（仅 AppX 布局里有会读到旧残留） -->
+    <Content Include="Assets\AppIcon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Manifest Include="$(ApplicationManifest)" />
+  </ItemGroup>
+
+  <!--
+    Defining the "Msix" ProjectCapability here allows the Single-project MSIX Packaging
+    Tools extension to be activated for this project even if the Windows App SDK Nuget
+    package has not yet been restored.
+  -->
+  <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <ProjectCapability Include="Msix" />
+  </ItemGroup>
+
+  <!--
+    Microsoft.Windows.SDK.BuildTools.WinApp adds first-class support for
+    `dotnet run` on packaged WinUI apps: it hooks the .NET CLI Run target to
+    register a debug identity via the winapp CLI and launch the app with
+    package identity (AUMID).
+    Set <EnableWinAppRunSupport>false</EnableWinAppRunSupport> in a
+    <PropertyGroup> above to opt out.
+  -->
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2705" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.4.0" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools.WinApp" Version="0.6.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\PromptPal.Core\PromptPal.Core.csproj" />
+  </ItemGroup>
+
+  <!--
+    Defining the "HasPackageAndPublishMenuAddedByProject" property here allows the Solution
+    Explorer "Package and Publish" context menu entry to be enabled for this project even if
+    the Windows App SDK Nuget package has not yet been restored.
+  -->
+  <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
+    <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
+  </PropertyGroup>
+
+  <!-- Publish Properties -->
+  <PropertyGroup>
+    <!-- WinUI3 非打包发布：R2R 与裁剪都会导致启动崩溃，统一关闭 -->
+    <PublishReadyToRun>false</PublishReadyToRun>
+    <PublishTrimmed>false</PublishTrimmed>
+    <!--
+      发布瘦身：WindowsAppSDK 2.4 经 Microsoft.WindowsAppSDK.ML 传递引入 WinML/ONNX/DirectML，
+      本应用不使用任何 AI 接口，这 4 个文件（约 40MB）发布时直接排除，替代以往手工移到 _stripped。
+      已验证：排除后启动日志走到 Activate called、窗口正常、进程模块列表不含任何 ML 组件。
+      需要完整输出排查时：dotnet publish -p:StripWinML=false
+      注意：deps.json 仍会保留这些条目的声明，但 .NET 仅在实际 P/Invoke/加载时探测，不调用即无影响。
+    -->
+    <StripWinML Condition="'$(StripWinML)' == ''">true</StripWinML>
+  </PropertyGroup>
+
+  <Target Name="StripUnusedWinML" AfterTargets="ComputeFilesToPublish" Condition="'$(StripWinML)' == 'true'">
+    <ItemGroup>
+      <ResolvedFileToPublish
+        Remove="@(ResolvedFileToPublish)"
+        Condition="'%(Filename)%(Extension)' == 'onnxruntime.dll'
+               Or '%(Filename)%(Extension)' == 'DirectML.dll'
+               Or '%(Filename)%(Extension)' == 'Microsoft.ML.OnnxRuntime.dll'
+               Or '%(Filename)%(Extension)' == 'Microsoft.Windows.AI.MachineLearning.dll'" />
+    </ItemGroup>
+  </Target>
+</Project>

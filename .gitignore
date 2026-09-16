@@ -1,0 +1,12 @@
+# 构建产物
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+# 发布包（体积大，通过 Release 流程生成，不入库）
+publish/
+
+# 本地 IDE / MCP 注册配置（含本机绝对路径）
+.trae/
